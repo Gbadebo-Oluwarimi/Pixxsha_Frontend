@@ -54,7 +54,7 @@ const Signin = () => {
           <div className="absolute bottom-4 right-4 flex items-center p-1 px-2 bg-white bg-opacity-30 backdrop-blur-md border border-white/30 rounded-full shadow-lg">
             {/* Image inside the pill */}
             <img
-              src="./icon.png" // Replace with your icon/image path
+              src="./placeholder.svg" // Replace with your icon/image path
               alt="Icon"
               className="w-8 h-8 mr-2 rounded-full" // Adjust size as needed
             />
