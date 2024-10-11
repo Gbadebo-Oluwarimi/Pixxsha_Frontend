@@ -2,15 +2,22 @@ import React, { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useDropzone } from "react-dropzone";
 import { closePopup } from "../Features/popupslice";
-import { uploadImage } from "../Features/image";
+import { uploadImage } from "../Features/image"; // Assuming this action exists
+import { createTag } from "../Features/Dialog"; // Import the createTag action
 
 const ImageUploadPopup = () => {
   const [preview, setPreview] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState("");
+  const [isTagging, setIsTagging] = useState(false); // Toggle for using tags
+  const [selectedTag, setSelectedTag] = useState(""); // For tag selection
+  const [newTagName, setNewTagName] = useState("");
+  const [isCreatingTag, setIsCreatingTag] = useState(false); // Loading state for creating tag
   const dispatch = useDispatch();
   const isOpen = useSelector((state) => state.popup.isOpen);
   const folders = useSelector((state) => state.folder.folders);
+  const tags = useSelector((state) => state.tags.tags); // Get tags from Redux state
+
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
     if (file) {
@@ -35,11 +42,19 @@ const ImageUploadPopup = () => {
           size: uploadedFile.size,
           type: uploadedFile.type,
         },
+        folderId: isTagging ? null : selectedFolder, // Use folder if tagging is off
+        tags: isTagging ? [selectedTag] : [], // Use tags if tagging is on
       };
 
       dispatch(uploadImage(imagePayload)); // Dispatch the uploadImage action with the file's data
-      alert(`Uploading ${uploadedFile.name}`);
+      alert(
+        `Uploading ${uploadedFile.name} ${
+          isTagging ? "with tag" : "to folder"
+        }: ${isTagging ? selectedTag : selectedFolder}`
+      );
       handleClose(); // Close the popup after upload
+    } else {
+      alert("Please upload an image.");
     }
   };
 
@@ -47,7 +62,23 @@ const ImageUploadPopup = () => {
   const handleClose = () => {
     setPreview(null);
     setUploadedFile(null);
+    setSelectedFolder("");
+    setSelectedTag("");
+    setNewTagName("");
     dispatch(closePopup());
+  };
+
+  const handleCreateTag = () => {
+    if (newTagName.trim()) {
+      setIsCreatingTag(true); // Set loading state
+      const tagPayload = {
+        id: Date.now(), // Generate a unique id for the new tag
+        name: newTagName,
+      };
+      dispatch(createTag(tagPayload)); // Dispatch the createTag action
+      setNewTagName(""); // Clear input after creation
+      setIsCreatingTag(false); // Reset loading state
+    }
   };
 
   if (!isOpen) return null; // Hide popup if it's not open
@@ -82,24 +113,102 @@ const ImageUploadPopup = () => {
             </p>
           )}
         </div>
+
+        {/* Toggle between Folder and Tag */}
         <div className="mt-4">
-          <label htmlFor="folder-select" className="block mb-2 text-sm">
-            Select Folder
-          </label>
-          <select
-            id="folder-select"
-            value={selectedFolder}
-            onChange={(e) => setSelectedFolder(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
-          >
-            <option value="">-- Select Folder --</option>
-            {folders.map((folder) => (
-              <option key={folder.id} value={folder.id}>
-                {folder.name}
-              </option>
-            ))}
-          </select>
+          <label className="block mb-2 text-sm">Choose Upload Method:</label>
+          <div>
+            <label>
+              <input
+                type="radio"
+                value="folder"
+                checked={!isTagging}
+                onChange={() => setIsTagging(false)}
+              />
+              Folder
+            </label>
+            <label className="ml-4">
+              <input
+                type="radio"
+                value="tag"
+                checked={isTagging}
+                onChange={() => setIsTagging(true)}
+              />
+              Tag
+            </label>
+          </div>
         </div>
+
+        {/* Folder Dropdown */}
+        {!isTagging && (
+          <div className="mt-4">
+            <label htmlFor="folder-select" className="block mb-2 text-sm">
+              Select Folder
+            </label>
+            <select
+              id="folder-select"
+              value={selectedFolder}
+              onChange={(e) => setSelectedFolder(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg"
+            >
+              <option value="">-- Select Folder --</option>
+              {folders.map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Tag Dropdown */}
+        {isTagging && (
+          <div className="mt-4">
+            <label htmlFor="tag-select" className="block mb-2 text-sm">
+              Select Tag
+            </label>
+            <select
+              id="tag-select"
+              value={selectedTag}
+              onChange={(e) => setSelectedTag(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg"
+            >
+              <option value="">-- Select Tag --</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Create New Tag */}
+            <div className="mt-4">
+              <label htmlFor="new-tag" className="block mb-2 text-sm">
+                Create New Tag
+              </label>
+              <input
+                type="text"
+                id="new-tag"
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                placeholder="New Tag Name"
+                className="w-full px-4 py-2 border rounded-lg"
+              />
+              <button
+                onClick={handleCreateTag}
+                disabled={isCreatingTag} // Disable button while creating tag
+                className={`mt-2 px-4 py-2 ${
+                  isCreatingTag
+                    ? "bg-gray-400"
+                    : "bg-green-500 hover:bg-green-600"
+                } text-white rounded-lg`}
+              >
+                {isCreatingTag ? "Creating..." : "Create Tag"}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Upload Button */}
         {uploadedFile && (
           <div className="mt-4">

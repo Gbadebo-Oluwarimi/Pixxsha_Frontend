@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Twitter,
@@ -18,7 +18,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
+import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,27 +35,62 @@ import { useSelector } from "react-redux";
 import ImageUploadPopup from "@/components/Upload";
 import CreateTagDialog from "@/components/CreateTagDialog";
 import CreateFolderDialog from "@/components/CreateFolderDialog";
-const nfts = [
-  { id: "#3367", image: "/placeholder.svg?height=400&width=400" },
-  { id: "#4234", image: "/placeholder.svg?height=400&width=400" },
-  { id: "#5242", image: "/placeholder.svg?height=400&width=400" },
-  { id: "#6486", image: "/placeholder.svg?height=400&width=400" },
-  { id: "#7682", image: "/placeholder.svg?height=400&width=400" },
-  { id: "#8824", image: "/placeholder.svg?height=400&width=400" },
-  { id: "#7463", image: "/placeholder.svg?height=400&width=400" },
-  { id: "#2461", image: "/placeholder.svg?height=400&width=400" },
-];
 
 export default function Component() {
   const [activeTab, setActiveTab] = useState("Home");
   const folders = useSelector((state) => state.folder.folders);
   const tags = useSelector((state) => state.tags.tags);
+  const nfts = useSelector((state) => state.image.images);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredItems, setFilteredItems] = useState([]);
+  useEffect(() => {
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    let filtered = [];
+
+    switch (activeTab) {
+      case "Home":
+        filtered = nfts.filter((nft) =>
+          nft.metadata.name.toLowerCase().includes(lowerCaseQuery)
+        );
+        break;
+      case "Folder":
+        filtered = folders.filter(
+          (folder) =>
+            folder.name.toLowerCase().includes(lowerCaseQuery) ||
+            folder.description.toLowerCase().includes(lowerCaseQuery)
+        );
+        break;
+      case "Tags":
+        filtered = tags.filter((tag) =>
+          tag.name.toLowerCase().includes(lowerCaseQuery)
+        );
+        break;
+      default:
+        filtered = [];
+    }
+
+    setFilteredItems(filtered);
+  }, [searchQuery, activeTab, folders, tags, nfts]);
+  const handleSearch = (e) => {
+    e.preventDefault();
+    console.log("Searching for:", searchQuery);
+  };
+
   const renderContent = () => {
+    const itemsToRender = searchQuery
+      ? filteredItems
+      : activeTab === "Home"
+      ? nfts
+      : activeTab === "Folder"
+      ? folders
+      : activeTab === "Tags"
+      ? tags
+      : [];
     switch (activeTab) {
       case "Home":
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {nfts.map((nft) => (
+            {itemsToRender.map((nft) => (
               <Card key={nft.id} className="rounded-none border shadow-sm">
                 <CardContent className="p-0">
                   <div className="aspect-square relative">
@@ -68,6 +103,9 @@ export default function Component() {
                   </div>
                   <div className="p-2">
                     <p className="text-sm font-medium">OATS {nft.id}</p>
+                    {nft.name && (
+                      <p className="text-xs text-gray-500">{nft.name}</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -77,18 +115,18 @@ export default function Component() {
       case "Folder":
         return (
           <div className="text-center">
-            {folders.length === 0 ? (
+            {itemsToRender.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64">
                 <Folder className="h-16 w-16 text-gray-400 mb-4" />
-                <h2 className="text-2xl font-bold mb-4">No folders yet</h2>
+                <h2 className="text-2xl font-bold mb-4">No folders found</h2>
                 <p className="text-gray-500 mb-4">
                   Create a folder to organize your NFTs
                 </p>
-                <CreateFolderDialog onCreateFolder />
+                <CreateFolderDialog />
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {folders.map((folder, index) => (
+                {itemsToRender.map((folder, index) => (
                   <Card key={index} className="rounded-none border shadow-sm">
                     <CardContent className="p-4">
                       <Folder className="h-8 w-8 text-gray-500 mb-2" />
@@ -100,11 +138,7 @@ export default function Component() {
                   </Card>
                 ))}
                 <Card className="rounded-none border shadow-sm flex items-center justify-center">
-                  <CreateFolderDialog
-                    onCreateFolder={(folder) =>
-                      setFolders([...folders, folder])
-                    }
-                  />
+                  <CreateFolderDialog />
                 </Card>
               </div>
             )}
@@ -113,20 +147,18 @@ export default function Component() {
       case "Tags":
         return (
           <div className="text-center">
-            {tags.length === 0 ? (
+            {itemsToRender.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64">
                 <Tag className="h-16 w-16 text-gray-400 mb-4" />
-                <h2 className="text-2xl font-bold mb-4">No tags yet</h2>
+                <h2 className="text-2xl font-bold mb-4">No tags found</h2>
                 <p className="text-gray-500 mb-4">
                   Create a tag to categorize your NFTs
                 </p>
-                <CreateTagDialog
-                  onCreateTag={(tag) => setTags([...tags, tag])}
-                />
+                <CreateTagDialog />
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {tags.map((tag, index) => (
+                {itemsToRender.map((tag, index) => (
                   <Card key={index} className="rounded-none border shadow-sm">
                     <CardContent className="p-4">
                       <Tag className="h-8 w-8 text-gray-500 mb-2" />
@@ -136,9 +168,7 @@ export default function Component() {
                   </Card>
                 ))}
                 <Card className="rounded-none border shadow-sm flex items-center justify-center">
-                  <CreateTagDialog
-                    onCreateTag={(tag) => setTags([...tags, tag])}
-                  />
+                  <CreateTagDialog />
                 </Card>
               </div>
             )}
@@ -261,20 +291,30 @@ export default function Component() {
                 BEANZ
               </Button>
             </div>
-            <div className="flex items-center space-x-2">
+            <form
+              onSubmit={handleSearch}
+              className="flex items-center space-x-2"
+            >
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   className="pl-8 rounded-none"
-                  placeholder="Search by Serial..."
+                  placeholder="Search..."
                   type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline" size="icon" className="rounded-none">
+              <Button
+                type="submit"
+                variant="outline"
+                size="icon"
+                className="rounded-none"
+              >
                 <Search className="h-4 w-4" />
                 <span className="sr-only">Search</span>
               </Button>
-            </div>
+            </form>
           </div>
           {renderContent()}
         </main>

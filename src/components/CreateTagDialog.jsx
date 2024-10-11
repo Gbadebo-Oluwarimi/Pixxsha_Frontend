@@ -16,14 +16,12 @@ import { createTag } from "@/Features/Dialog";
 export default function CreateTagDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
 
   const dispatch = useDispatch();
   const handleCreate = () => {
     const newTag = {
       id: Date.now(), // Generate a unique id, e.g., using timestamp
       name,
-      description,
     };
     dispatch(createTag(newTag));
     setIsOpen(false);
@@ -52,17 +50,6 @@ export default function CreateTagDialog() {
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
               className="col-span-3"
             />
           </div>
