@@ -1,14 +1,16 @@
 import React, { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useDropzone } from "react-dropzone";
-import { closePopup } from "../Features/popupslice"; // Import your slice actions
+import { closePopup } from "../Features/popupslice";
+import { uploadImage } from "../Features/image";
 
 const ImageUploadPopup = () => {
   const [preview, setPreview] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [selectedFolder, setSelectedFolder] = useState("");
   const dispatch = useDispatch();
   const isOpen = useSelector((state) => state.popup.isOpen);
-
+  const folders = useSelector((state) => state.folder.folders);
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
     if (file) {
@@ -25,12 +27,26 @@ const ImageUploadPopup = () => {
 
   const handleUpload = () => {
     if (uploadedFile) {
+      const imagePayload = {
+        id: Date.now(), // Generate a unique id
+        url: URL.createObjectURL(uploadedFile), // Temporary URL for image preview
+        metadata: {
+          name: uploadedFile.name,
+          size: uploadedFile.size,
+          type: uploadedFile.type,
+        },
+      };
+
+      dispatch(uploadImage(imagePayload)); // Dispatch the uploadImage action with the file's data
       alert(`Uploading ${uploadedFile.name}`);
+      handleClose(); // Close the popup after upload
     }
   };
 
   // Function to close the popup
   const handleClose = () => {
+    setPreview(null);
+    setUploadedFile(null);
     dispatch(closePopup());
   };
 
@@ -49,7 +65,7 @@ const ImageUploadPopup = () => {
         {/* Dropzone Area */}
         <div
           {...getRootProps()}
-          className={`w-full h-64 flex items-center justify-center rounded-lg ${
+          className={`w-full h-64 flex items-center justify-center rounded-lg border-2 ${
             isDragActive ? "border-blue-500" : "border-gray-300"
           }`}
         >
@@ -65,6 +81,24 @@ const ImageUploadPopup = () => {
               Drag 'n' drop an image here, or click to select one
             </p>
           )}
+        </div>
+        <div className="mt-4">
+          <label htmlFor="folder-select" className="block mb-2 text-sm">
+            Select Folder
+          </label>
+          <select
+            id="folder-select"
+            value={selectedFolder}
+            onChange={(e) => setSelectedFolder(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg"
+          >
+            <option value="">-- Select Folder --</option>
+            {folders.map((folder) => (
+              <option key={folder.id} value={folder.id}>
+                {folder.name}
+              </option>
+            ))}
+          </select>
         </div>
         {/* Upload Button */}
         {uploadedFile && (

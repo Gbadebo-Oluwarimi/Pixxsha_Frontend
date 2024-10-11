@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import {
   Search,
   Twitter,
@@ -8,9 +11,14 @@ import {
   Users,
   LineChart,
   Bell,
+  User,
+  Menu,
+  Tag,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { openPopup } from "../Features/popupslice";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,9 +28,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useDispatch, useSelector } from "react-redux";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useDispatch } from "react-redux";
+import { openPopup } from "../Features/popupslice";
+import { useSelector } from "react-redux";
 import ImageUploadPopup from "@/components/Upload";
-
+import CreateTagDialog from "@/components/CreateTagDialog";
+import CreateFolderDialog from "@/components/CreateFolderDialog";
 const nfts = [
   { id: "#3367", image: "/placeholder.svg?height=400&width=400" },
   { id: "#4234", image: "/placeholder.svg?height=400&width=400" },
@@ -35,137 +47,16 @@ const nfts = [
 ];
 
 export default function Component() {
-  const dispatch = useDispatch();
-  const { isOpen } = useSelector((state) => state.popup);
-  const handleOpenPopup = () => {
-    console.log("djdj");
-    dispatch(openPopup());
-  };
-  return (
-    <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
-      {isOpen ? <ImageUploadPopup /> : ""}
-      <div className="hidden border-r bg-gray-100/40 lg:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-[60px] items-center border-b px-6">
-            <Link className="flex items-center gap-2 font-semibold" to="#">
-              <Package className="h-6 w-6" />
-              <span className="">Pixxsha</span>
-            </Link>
-          </div>
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="grid items-start px-4 text-sm font-medium">
-              <Link
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900"
-                to="#"
-              >
-                <Home className="h-4 w-4" />
-                Home
-              </Link>
-              <Link
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900"
-                href="#"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                Gallery
-              </Link>
-              <Link
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-900 transition-all"
-                href="#"
-              >
-                <Package className="h-4 w-4" />
-                World
-              </Link>
-              <Link
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900"
-                href="#"
-              >
-                <Users className="h-4 w-4" />
-                Merchtap
-              </Link>
-              <Link
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900"
-                href="#"
-              >
-                <LineChart className="h-4 w-4" />
-                Buy
-              </Link>
-            </nav>
-          </div>
-          <div className="mt-auto p-4">
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle>Upgrade to Pro</CardTitle>
-                <CardDescription>
-                  Unlock all features and get unlimited access to our support
-                  team
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" size="sm">
-                  Upgrade
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col">
-        <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-gray-100/40 px-6 dark:bg-gray-800/40">
-          <Link className="lg:hidden" href="#">
-            <Package className="h-6 w-6" />
-            <span className="sr-only">Home</span>
-          </Link>
-          <div className="flex-1"></div>
-          <div className="flex items-center gap-4">
-            <Link href="#">
-              <Twitter className="h-5 w-5" />
-            </Link>
-            <Link href="#">
-              <Youtube className="h-5 w-5" />
-            </Link>
-            <Button
-              className="bg-black text-white rounded-none hover:bg-gray-800"
-              size="sm"
-              onClick={handleOpenPopup}
-            >
-              Upload Image
-            </Button>
-          </div>
-        </header>
-        <main className="flex-1 p-4 md:p-6">
-          <div className="flex justify-between items-center mb-6">
-            <div className="space-x-2">
-              <Button className="bg-black text-white rounded-none hover:bg-gray-800">
-                OATS
-              </Button>
-              <Button
-                variant="outline"
-                className="text-gray-500 rounded-none hover:bg-gray-100"
-              >
-                BEANZ
-              </Button>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  className="pl-8 rounded-none"
-                  placeholder="Search by Serial..."
-                  type="search"
-                />
-              </div>
-              <Button variant="outline" size="icon" className="rounded-none">
-                <MenuIcon className="h-4 w-4" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </div>
-          </div>
+  const [activeTab, setActiveTab] = useState("Home");
+  const folders = useSelector((state) => state.folder.folders);
+  const tags = useSelector((state) => state.tags.tags);
+  const renderContent = () => {
+    switch (activeTab) {
+      case "Home":
+        return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {nfts.map((nft) => (
-              <Card
-                key={nft.id}
-                className="rounded-none border-none shadow-none"
-              >
+              <Card key={nft.id} className="rounded-none border shadow-sm">
                 <CardContent className="p-0">
                   <div className="aspect-square relative">
                     <img
@@ -182,29 +73,212 @@ export default function Component() {
               </Card>
             ))}
           </div>
+        );
+      case "Folder":
+        return (
+          <div className="text-center">
+            {folders.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64">
+                <Folder className="h-16 w-16 text-gray-400 mb-4" />
+                <h2 className="text-2xl font-bold mb-4">No folders yet</h2>
+                <p className="text-gray-500 mb-4">
+                  Create a folder to organize your NFTs
+                </p>
+                <CreateFolderDialog onCreateFolder />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {folders.map((folder, index) => (
+                  <Card key={index} className="rounded-none border shadow-sm">
+                    <CardContent className="p-4">
+                      <Folder className="h-8 w-8 text-gray-500 mb-2" />
+                      <h3 className="font-semibold">{folder.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        {folder.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+                <Card className="rounded-none border shadow-sm flex items-center justify-center">
+                  <CreateFolderDialog
+                    onCreateFolder={(folder) =>
+                      setFolders([...folders, folder])
+                    }
+                  />
+                </Card>
+              </div>
+            )}
+          </div>
+        );
+      case "Tags":
+        return (
+          <div className="text-center">
+            {tags.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64">
+                <Tag className="h-16 w-16 text-gray-400 mb-4" />
+                <h2 className="text-2xl font-bold mb-4">No tags yet</h2>
+                <p className="text-gray-500 mb-4">
+                  Create a tag to categorize your NFTs
+                </p>
+                <CreateTagDialog
+                  onCreateTag={(tag) => setTags([...tags, tag])}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {tags.map((tag, index) => (
+                  <Card key={index} className="rounded-none border shadow-sm">
+                    <CardContent className="p-4">
+                      <Tag className="h-8 w-8 text-gray-500 mb-2" />
+                      <h3 className="font-semibold">{tag.name}</h3>
+                      <p className="text-sm text-gray-500">{tag.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+                <Card className="rounded-none border shadow-sm flex items-center justify-center">
+                  <CreateTagDialog
+                    onCreateTag={(tag) => setTags([...tags, tag])}
+                  />
+                </Card>
+              </div>
+            )}
+          </div>
+        );
+      case "About Us":
+        return (
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">About Us</h2>
+            <p>Browse and purchase the latest OATS NFT collections.</p>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const NavItems = ({ onClick = () => {} }) => (
+    <>
+      {["Home", "Folder", "Tags", "About Us"].map((item) => (
+        <button
+          key={item}
+          className={`flex items-center gap-3 rounded-none px-3 py-2 transition-all ${
+            activeTab === item
+              ? "bg-gray-200 text-gray-900"
+              : "text-gray-500 hover:text-gray-900"
+          }`}
+          onClick={() => {
+            setActiveTab(item);
+            onClick();
+          }}
+        >
+          {item === "Home" && <Home className="h-4 w-4" />}
+          {item === "Folder" && <FolderOpen className="h-4 w-4" />}
+          {item === "Tags" && <Tag className="h-4 w-4" />}
+          {item === "About Us" && <Users className="h-4 w-4" />}
+          {item}
+        </button>
+      ))}
+    </>
+  );
+  const dispatch = useDispatch();
+  const { isOpen } = useSelector((state) => state.popup);
+  const handleOpenPopup = () => {
+    dispatch(openPopup());
+  };
+  return (
+    <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
+      {isOpen && <ImageUploadPopup />}
+      <div className="hidden border-r bg-gray-100/40 lg:block">
+        <div className="flex h-full max-h-screen flex-col gap-2">
+          <div className="flex h-[60px] items-center border-b px-6">
+            <Link className="flex items-center gap-2 font-semibold" href="#">
+              <Package className="h-6 w-6" />
+              <span className="">OATS</span>
+            </Link>
+          </div>
+          <div className="flex-1 overflow-auto py-2">
+            <nav className="grid items-start px-4 text-sm font-medium">
+              <NavItems />
+            </nav>
+          </div>
+          <div className="mt-auto p-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Upgrade to Pro</CardTitle>
+                <CardDescription>
+                  Unlock all features and get unlimited access to our support
+                  team
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full rounded-none">Upgrade</Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-gray-100/40 px-6 dark:bg-gray-800/40">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 lg:hidden rounded-none"
+              >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[80%] sm:w-[385px]">
+              <nav className="grid gap-4 py-4">
+                <NavItems onClick={() => {}} />
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <div className="flex-1" />
+          <div className="flex items-center gap-4">
+            <Link href="#">
+              <Twitter className="h-5 w-5" />
+            </Link>
+            <Link href="#">
+              <Youtube className="h-5 w-5" />
+            </Link>
+            <Button
+              className="rounded-none"
+              size="sm"
+              onClick={handleOpenPopup}
+            >
+              Upload Images
+            </Button>
+          </div>
+        </header>
+        <main className="flex-1 p-4 md:p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="space-x-2">
+              <Button className="rounded-none">OATS</Button>
+              <Button variant="outline" className="rounded-none">
+                BEANZ
+              </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  className="pl-8 rounded-none"
+                  placeholder="Search by Serial..."
+                  type="search"
+                />
+              </div>
+              <Button variant="outline" size="icon" className="rounded-none">
+                <Search className="h-4 w-4" />
+                <span className="sr-only">Search</span>
+              </Button>
+            </div>
+          </div>
+          {renderContent()}
         </main>
       </div>
     </div>
-  );
-}
-
-function MenuIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="4" x2="20" y1="12" y2="12" />
-      <line x1="4" x2="20" y1="6" y2="6" />
-      <line x1="4" x2="20" y1="18" y2="18" />
-    </svg>
   );
 }
