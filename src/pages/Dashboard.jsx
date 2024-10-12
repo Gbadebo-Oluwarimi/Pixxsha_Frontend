@@ -403,7 +403,7 @@ export default function Component() {
             <div className="flex h-[60px] items-center border-b px-6">
               <Link className="flex items-center gap-2 font-semibold" href="#">
                 <Package className="h-6 w-6" />
-                <span className="">OATS</span>
+                <span className="">Pixxsha</span>
               </Link>
             </div>
             <div className="flex-1 overflow-auto py-2">
@@ -479,7 +479,7 @@ export default function Component() {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
                     className="pl-8 rounded-none"
-                    placeholder="Search..."
+                    placeholder="Search by name..."
                     type="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
